@@ -1,0 +1,60 @@
+#!/bin/bash
+SLN_NAME=$1
+PROJ_NAME=$2
+TEMPLATE=$3
+TEST_PROJ_NAME=$PROJ_NAME.Tests
+SRC_FOLDER_NAME="src"
+TEST_FOLDER_NAME="test"
+
+function showopts {
+  echo "Command creates a basic solution folder structure, initializes main project and test project, creates sln file. At the end it opens VS Code editor."
+  echo ""
+  echo "Usage: dotnet-solution [solution-name] [main-project-name] <<template>>"
+  echo ""
+  echo "<<Template>> name is passed to the [dotnet new] command. It will be used to create new dotnet project."
+  echo "More about templates can be found under: https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-new"
+  echo ""
+  echo "Example: dotnet-solution adventure-works AdventureWorks.Common classlib"
+}
+
+if [ $# -ne 3 ]
+then
+  showopts
+fi
+ 
+echo Creating solution: $SLN_NAME
+
+# Directory structure
+mkdir $SLN_NAME
+mkdir $SLN_NAME/$SRC_FOLDER_NAME
+mkdir $SLN_NAME/$SRC_FOLDER_NAME/$PROJ_NAME
+mkdir $SLN_NAME/$TEST_FOLDER_NAME
+mkdir $SLN_NAME/$TEST_FOLDER_NAME/$TEST_PROJ_NAME
+
+# Main project creation
+cd $SLN_NAME/$SRC_FOLDER_NAME/$PROJ_NAME
+dotnet new $TEMPLATE
+cd ../../
+
+# Test project creation
+cd test/$TEST_PROJ_NAME
+dotnet new xunit
+dotnet add reference ../../$SRC_FOLDER_NAME/$PROJ_NAME/$PROJ_NAME.csproj
+
+# Extra packages to my test project
+# I like FluentAssertions and Moq
+dotnet add package FluentAssertions
+dotnet add package Moq
+dotnet restore
+
+cd ../../
+
+# Soluction creation
+dotnet new sln --name $SLN_NAME
+dotnet sln add ./$SRC_FOLDER_NAME/$PROJ_NAME/$PROJ_NAME.csproj
+dotnet sln add ./$TEST_FOLDER_NAME/$TEST_PROJ_NAME/$TEST_PROJ_NAME.csproj
+
+# Open VS Code and time to start work
+code .
+
+echo Solution $SLN_NAME created
